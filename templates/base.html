@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}КиноРейт — Система рейтинга фильмов{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_2.css') }}" />
+    
+</head>
+<body class="bg-dark text-white">
+    <header>
+        <nav>
+            <a href="{{ url_for('film.index') }}" class="logo" style="font-family: Arial black; font-size: 32px;">КиноРейт</a>
+            <div class="menu-links">
+              {% if current_user.is_authenticated and current_user.is_admin %}
+              <a href="{{ url_for('admin.dashboard') }}">Админ-панель</a>
+              {% endif %}
+              {% if current_user.is_authenticated %}
+                  <a href="{{ url_for('user.profile') }}">{{ current_user.username }}</a>
+              {% else %}
+                  <a href="{{ url_for('auth.login') }}">Войти</a>
+                  <a href="{{ url_for('auth.register') }}">Регистрация</a>
+              {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content bg-dark text-white">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="card" style="background-color: #FF6F00; color: #121212;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>© 2025 КиноРейт. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+

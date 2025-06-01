@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ film.title }} — КиноРейт{% endblock %}
+
+{% block content %}
+<div class="film-detail-container">
+    <div>
+        <img src="{{ film.poster_url or url_for('static', filename='images/poster-placeholder.png') }}" alt="{{ film.title }}" class="film-detail-poster" />
+        <div class="film-detail-info">
+            <h1>{{ film.title }} ({{ film.year }})</h1>
+            <p><strong>Жанр:</strong> {{ film.genre }}</p>
+            <p>{{ film.description }}</p>
+            <p class="film-detail-rating">
+              {% if film.ratings|length > 0 %}
+                {{ (film.ratings | sum(attribute='score') / film.ratings|length) | round(1) }}/10 ★
+              {% else %}
+                Нет оценок
+              {% endif %}
+            </p>
+        </div>
+    </div>
+    <div style="flex:1; min-width: 300px;">
+
+
+        
+        <h2>Комментарии</h2>
+        {% set shown_ratings = namespace(users=[]) %}
+        {% for comment in film.comments if comment.parent_id is none %}
+        <div class="card comment">
+            <p>
+            {% if comment.is_deleted %}
+                <em>Комментарий был удален модерацией</em>
+            {% else %}
+                {{ comment.content }}
+            {% endif %}
+            </p>
+            <small>
+                — {{ comment.author.username }}, {{ comment.date_posted.strftime('%d.%m.%Y %H:%M') }}
+
+                {# Показываем оценку только один раз на пользователя #}
+                {% if comment.author.id not in shown_ratings.users %}
+                    {% for rating in comment.author.ratings %}
+                        {% if rating.film_id == film.id %}
+                            <span class="comment-rating">{{ rating.score }}/10 ★</span>
+                            {% set _ = shown_ratings.users.append(comment.author.id) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </small>
+
+            <div style="margin-top: 0.5rem;">
+                <form action="{{ url_for('film.like', comment_id=comment.id) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm">🔥 {{ comment.likes_list|length }}</button>
+                </form>
+                <button onclick="document.getElementById('reply-form-{{ comment.id }}').style.display='block'" class="btn btn-sm">↩️ Ответить</button>
+
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <form action="{{ url_for('film.delete_comment', comment_id=comment.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить комментарий?');">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑 Удалить</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {# Ответы на комментарий #}
+            {% for reply in comment.replies %}
+            <div class="card comment" style="margin-top: 0.5rem; margin-left: 1rem; background-color: #2a2a2a;">
+                <p>{{ reply.content }}</p>
+                <small>— {{ reply.author.username }}, {{ reply.date_posted.strftime('%d.%m.%Y %H:%M') }}</small>
+            </div>
+            {% endfor %}
+
+            {# Форма ответа #}
+            <form id="reply-form-{{ comment.id }}" method="post"
+                action="{{ url_for('film.reply', comment_id=comment.id) }}"
+                style="display:none; margin-top:0.5rem;">
+                <textarea name="reply_content" rows="2" placeholder="Ваш ответ..." required></textarea>
+                <button type="submit" class="btn btn-sm">Отправить</button>
+            </form>
+        </div>
+        {% endfor %}
+
+
+        {% if current_user.is_authenticated %}
+        <h3>Оставить комментарий</h3>
+        <form method="post" action="{{ url_for('film.film_detail', film_id=film.id) }}">
+            <textarea name="comment" rows="3" placeholder="Ваш комментарий..." required></textarea>
+
+            {% if user_rating is none %}
+                <label for="rating">Ваша оценка фильму:</label>
+                <div class="star-rating" style="margin-bottom: 0.5rem;">
+                    {% for i in range(10, 0, -1) %}
+                        <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}">
+                        <label for="star{{ i }}" title="{{ i }} звёзд">&#9733;</label>
+                    {% endfor %}
+                </div>
+                <p style="font-size: 0.9rem; color: #999;">Оценку можно поставить только один раз и изменить её нельзя.</p>
+            {% else %}
+                <p><strong>Вы уже оценили этот фильм:</strong> {{ user_rating }}/10 ★</p>
+                <p style="font-size: 0.9rem; color: #999;">Оценку можно ставить только один раз — повторная отправка не изменит её.</p>
+            {% endif %}
+
+            <button type="submit" class="btn">Отправить</button>
+        </form>
+
+
+        {% else %}
+        <p><a href="{{ url_for('auth.login') }}">Войдите</a>, чтобы оставить комментарий.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

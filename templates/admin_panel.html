@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель — КиноРейт{% endblock %}
+
+
+{% block content %}
+<h1>Админ-панель</h1>
+
+<h2>Добавить фильм</h2>
+<form method="POST" action="{{ url_for('admin.add_film') }}">
+  <input type="text" name="title" placeholder="Название" required>
+  <input type="text" name="year" placeholder="Год">
+  <input type="text" name="genre" placeholder="Жанр">
+  <textarea name="description" placeholder="Описание"></textarea>
+  <input type="text" name="poster_url" placeholder="Ссылка на постер">
+  <button type="submit">Добавить</button>
+</form>
+
+<h2>Список фильмов</h2>
+<table class="film-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Год</th>
+      <th>Жанр</th>
+      <th>Удалить</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for film in films %}
+    <tr>
+      <td>{{ film.id }}</td>
+      <td>{{ film.title }}</td>
+      <td>{{ film.year }}</td>
+      <!-- Добавляем класс genre-cell -->
+      <td class="genre-cell">{{ film.genre }}</td>
+      <td>
+        <form action="{{ url_for('admin.delete_film', film_id=film.id) }}" method="POST" onsubmit="return confirm('Удалить этот фильм?');">
+          <button type="submit">Удалить</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

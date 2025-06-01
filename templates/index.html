@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Главная — КиноРейт{% endblock %}
+
+{% block content %}
+<h1>Фильмы</h1>
+
+<!-- Форма фильтрации -->
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <!-- Поиск по названию -->
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Поиск по названию" value="{{ search }}">
+        </div>
+        
+        <!-- Фильтр по жанру -->
+         <div class="col-md-2">
+            <input type="text" name="genre" class="form-control" placeholder="Поиск по жанру" value="{{ genre }}">
+        </div>
+        
+        <!-- Фильтр по году -->
+        <div class="col-md-2">
+            <input type="text" name="year" class="form-control" placeholder="Поиск по году" value="{{ year }}">
+        </div>
+        
+        <!-- Сортировка -->
+        <div class="col-md-3">
+            <select name="sort" class="form-select">
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Сначала новые</option>
+                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Сначала старые</option>
+                <option value="top_rated" {% if sort == 'top_rated' %}selected{% endif %}>По рейтингу</option>
+                <option value="most_rated" {% if sort == 'most_rated' %}selected{% endif %}>По популярности</option>
+            </select>
+        </div>
+        
+        <!-- Кнопка применения -->
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-custom w-100">Применить</button>
+        </div>
+    </div>
+</form>
+
+<!-- Список фильмов -->
+<div class="film-list">
+    {% for film in films.items %}
+    <div class="card film-card mb-3">
+        <div class="film-rating-badge">
+            {% if film.ratings|length > 0 %}
+                {{ (film.ratings|sum(attribute='score') / film.ratings|length)|round(1) }}/10 ★
+            {% else %}
+                Нет рейтинга
+            {% endif %}
+        </div>
+        <img src="{{ film.poster_url or url_for('static', filename='images/poster-placeholder.png') }}" 
+             alt="{{ film.title }}" class="film-poster">
+        <div class="card-body">
+            <h5 class="card-title">
+                <a href="{{ url_for('film.film_detail', film_id=film.id) }}" style="font-size: 24px;">{{ film.title }} ({{ film.year }})</a>
+            </h5>
+            <p class="card-text" style="color: white; font-style: italic; font-size: 16px;">{{ film.genre }}</small></p>
+            <p class="card-text" style="color:white;">{{ film.description[:100] }}{% if film.description|length > 100 %}...{% endif %}</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning" style="width: 1068px;"">Фильмы не найдены. Попробуйте изменить параметры поиска.</div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if films.has_prev %}
+            <li class="page-item">
+                <a class="btn btn-custom" href="{{ url_for('film.index', page=films.prev_num, search=search, genre=genre, year=year, sort=sort) }}">Назад</a>
+            </li>
+        {% endif %}
+        
+        {% for page_num in films.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == films.page %}active{% endif %}">
+                    <a class="btn btn-custom" href="{{ url_for('film.index', page=page_num, search=search, genre=genre, year=year, sort=sort) }}">{{ page_num }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="btn btn-custom">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if films.has_next %}
+            <li class="page-item">
+                <a class="btn btn-custom" href="{{ url_for('film.index', page=films.next_num, search=search, genre=genre, year=year, sort=sort) }}">Вперед</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}

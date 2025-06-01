@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль — {{ current_user.username }}{% endblock %}
+
+{% block content %}
+<h1>Профиль пользователя {{ current_user.username }}</h1>
+
+<p><strong>Email:</strong> {{ current_user.email }}</p>
+<p><strong>Роль:</strong> {{ 'Администратор' if current_user.is_admin else 'Пользователь' }}</p>
+
+<h2>Добавленные комментарии</h2>
+{% for comment in current_user.comments %}
+ <div class="card comment" style="position: relative; padding-top: 1.5em;">
+  <p>{{ comment.content }}</p>
+  <div class="comment-meta" style="font-size: 0.85em; color: #555;">
+    <span>{{ comment.date_posted.strftime('%d.%m.%Y %H:%M') }} — фильм: 
+      <a href="{{ url_for('film.film_detail', film_id=comment.film.id) }}">{{ comment.film.title }}</a>
+    </span>
+    {% if user_ratings[comment.film.id] is defined %}
+      <span class="comment-rating" 
+            style="position: absolute; top: 0.5em; right: 1em; font-weight: bold; color: #f39c12;">
+        {{ user_ratings[comment.film.id] }}/10 ★
+      </span>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+  <p>Комментариев нет.</p>
+{% endfor %}
+<form action="{{ url_for('auth.logout') }}">
+  <button type="submit" class="btn btn-logout">Выйти из аккаунта</button>
+</form>
+{% endblock %}
+
+
+
